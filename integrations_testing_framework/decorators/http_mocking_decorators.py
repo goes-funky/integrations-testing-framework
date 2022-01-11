@@ -46,7 +46,10 @@ def intercept_requests(file_uri: str, generate=False):
         return response
 
     def intercept_responses(func):
-        os.remove(file_uri)
+        try:
+            os.remove(file_uri)
+        except:
+            pass
         patcher = std_mock.patch(target=target_send, new=intercept_and_write_response)
         try:
             patcher.start()

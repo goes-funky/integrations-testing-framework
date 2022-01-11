@@ -3,12 +3,31 @@ import os.path
 import sys
 from functools import wraps
 from typing import List
-from integrations_testing_framework import utils
+from integrations_testing_framework import utils, intercepted_stdout
 
 
 def write_stdout(file_uri: str):
-    with open(file_uri, 'w') as file:
-        file.writelines(sys.stdout.readlines())
+    def decorator(func):
+
+        @wraps(func)
+        def inner():
+            sys.stdout = intercepted_stdout
+            sys.stdout.truncate(0)
+            sys.stdout.seek(0)
+            try:
+                func()
+                sys.stdout.seek(0)
+                with open(file_uri, 'w') as file:
+                    lines = sys.stdout.readlines()
+                    if len(lines) == 0:
+                        raise Exception("Stdout is empty")
+                    file.writelines(lines)
+            finally:
+                sys.stdout.truncate(0)  # ensure stdout is cleared
+
+        return inner
+
+    return decorator
 
 
 def assert_stdout_matches(file_uri: str):
@@ -23,7 +42,9 @@ def assert_stdout_matches(file_uri: str):
     def decorator(func):
         @wraps(func)
         def inner():
+            sys.stdout = intercepted_stdout
             sys.stdout.truncate(0)
+            sys.stdout.seek(0)
             try:
                 func()
                 sys.stdout.seek(0)

@@ -4,6 +4,9 @@ def assert_matching_file_contents(file_1, file_2):
         expected = line.rstrip()
         actual = file_2.readline().rstrip()
 
-        error_msg = f'Output does not match between files {file_1.name} and {file_2.name}.\n\nExpected: \n{expected}\nActual: \n{actual}'
+        error_msg = f'Output does not match between files.\n\nExpected: \n{expected}\nActual: \n{actual}'
         assert expected == actual, error_msg
         i += 1
+
+    if i == 0:
+        raise Exception("File is empty.")
