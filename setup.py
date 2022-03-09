@@ -9,7 +9,7 @@ setup(
     py_modules=["integrations_testing_framework"],
     install_requires=[
         # NB: Pin these to a more specific version for tap reliability
-        "requests>=2.26.0",
+        "requests==2.20.0",
         "responses==0.17.0",
     ],
     packages=find_packages(),
