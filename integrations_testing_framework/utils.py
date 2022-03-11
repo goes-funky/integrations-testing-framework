@@ -1,5 +1,3 @@
-import json
-
 def assert_matching_file_contents(file_1, file_2):
     i = 0
     for line in file_1:
