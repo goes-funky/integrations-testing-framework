@@ -14,12 +14,16 @@ def assert_matching_file_contents(file_1, file_2):
         raise Exception("File is empty.")
 
 
-# @param catalog_path - a path of a catalog
-# @param stream_name - the name of the stream to be modified
-# creates a stream file as catalog with the stream_name selected
-# @return - the path of the catalog created as string
-# @with_sys_args(['--config', config_path, '--catalog', utils.select_schema('all-streams.json', 'epics')])
-def select_schema(catalog_path, stream_name):
+def select_schema(catalog_path: str, stream_name: str)-> str:
+    """
+    Creates a catalog file with the stream_name selected.
+    Example: @with_sys_args(['--config', config_path, '--catalog', utils.select_schema('all-streams.json', 'epics')])
+
+    :param str catalog_path: a path of a catalog
+    :param str stream_name: the name of the stream to be modified
+    :return: the path of the catalog created as string
+    :rtype: str
+    """
     f = open(catalog_path, "r")
     catalog = f.read()
     f.close()
@@ -30,9 +34,9 @@ def select_schema(catalog_path, stream_name):
         if stream['name'] == stream_name:
             stream['metadata'][0]['metadata']['selected'] = True
 
-
     # Open the file for writing.
     f = open("current-catalog.json", "w")
     f.write(json.dumps(catalog))
     f.close()
+
     return "current-catalog.json"
