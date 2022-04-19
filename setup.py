@@ -10,7 +10,7 @@ setup(
     install_requires=[
         # NB: Pin these to a more specific version for tap reliability
         "requests>=2.20.0",
-        "responses==0.17.0",
+        "responses==0.4.0",
     ],
     packages=find_packages(),
     classifiers=[
