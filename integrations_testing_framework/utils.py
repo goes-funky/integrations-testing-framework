@@ -14,7 +14,7 @@ def assert_matching_file_contents(file_1, file_2):
         raise Exception("File is empty.")
 
         
- def select_schema(catalog_path: str, stream_name: str) -> str:
+def select_schema(catalog_path: str, stream_name: str) -> str:
     """
     Creates a catalog file with the stream_name selected.
     Example: @with_sys_args(['--config', config_path, '--catalog', utils.select_schema('all-streams.json', 'epics')])
