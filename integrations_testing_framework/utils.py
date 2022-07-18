@@ -35,8 +35,8 @@ def select_schema(catalog_path: str, stream_name: str) -> str:
             stream['metadata'][0]['metadata']['selected'] = True
 
     # Open the file for writing.
-    f = open(f"catalogs/{stream_name}.json", "w")
+    f = open(f"tests/catalogs/{stream_name}.json", "w")
     f.write(json.dumps(catalog))
     f.close()
 
-    return f"catalogs/{stream_name}.json"
+    return f"tests/catalogs/{stream_name}.json"
