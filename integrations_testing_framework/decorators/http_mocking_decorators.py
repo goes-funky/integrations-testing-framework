@@ -18,9 +18,11 @@ def intercept_requests(file_uri: str, generate=False):
         @wraps(func)
         def interceptor(*args, **kwargs):
             with vcr.use_cassette(file_uri, record_mode=record_mode, filter_headers=['authorization']) as cass:
-                cass.allow_playback_repeats = False
+                if generate is False:
+                    cass.allow_playback_repeats = False
                 func(*args, **kwargs)
-                assert cass.all_played is True, "not all previously recorded requests were made"
+                if generate is False:
+                    assert cass.all_played is True, "not all previously recorded requests were made"
         return interceptor
 
     return decorator
