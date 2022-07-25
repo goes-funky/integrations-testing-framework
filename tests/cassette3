@@ -134,7 +134,7 @@ interactions:
         {\n\t$(\"#nav_dom_special\").addClass(\"selected\")\n\t$(\"#nav_dom_int_sub\").hide()\n\t$(\"#nav_dom_idn_sub\").hide()\n\t$(\"#nav_dom_dnssec_sub\").hide()\n\t$(\"#nav_dom_tools_sub\").hide()\n\t$(\"#nav_dom_root_sub\").hide()\n});\n</script>\n\n\n</body>\n\n</html>\n"
     headers:
       Age:
-      - '3270'
+      - '3840'
       Cache-Control:
       - public, max-age=21603
       Connection:
@@ -152,9 +152,9 @@ interactions:
       Content-Type:
       - text/html; charset=UTF-8
       Date:
-      - Fri, 22 Jul 2022 13:40:47 GMT
+      - Mon, 25 Jul 2022 14:10:48 GMT
       Expires:
-      - Fri, 22 Jul 2022 14:46:17 GMT
+      - Mon, 25 Jul 2022 15:06:48 GMT
       Last-Modified:
       - Sun, 18 Jul 2021 22:53:53 GMT
       Referrer-Policy:
@@ -306,7 +306,7 @@ interactions:
         {\n\t$(\"#nav_dom_special\").addClass(\"selected\")\n\t$(\"#nav_dom_int_sub\").hide()\n\t$(\"#nav_dom_idn_sub\").hide()\n\t$(\"#nav_dom_dnssec_sub\").hide()\n\t$(\"#nav_dom_tools_sub\").hide()\n\t$(\"#nav_dom_root_sub\").hide()\n});\n</script>\n\n\n</body>\n\n</html>\n"
     headers:
       Age:
-      - '3271'
+      - '2607'
       Cache-Control:
       - public, max-age=21603
       Connection:
@@ -324,9 +324,9 @@ interactions:
       Content-Type:
       - text/html; charset=UTF-8
       Date:
-      - Fri, 22 Jul 2022 13:40:48 GMT
+      - Mon, 25 Jul 2022 14:10:48 GMT
       Expires:
-      - Fri, 22 Jul 2022 14:46:17 GMT
+      - Mon, 25 Jul 2022 15:27:21 GMT
       Last-Modified:
       - Sun, 18 Jul 2021 22:53:53 GMT
       Referrer-Policy:

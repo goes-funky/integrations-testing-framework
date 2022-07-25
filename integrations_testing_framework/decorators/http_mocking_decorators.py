@@ -1,5 +1,6 @@
 import vcr
 from functools import wraps
+from pathlib import Path
 
 
 def intercept_requests(file_uri: str, generate=False):
@@ -17,7 +18,14 @@ def intercept_requests(file_uri: str, generate=False):
     def decorator(func):
         @wraps(func)
         def interceptor(*args, **kwargs):
-            with vcr.use_cassette(file_uri, record_mode=record_mode, filter_headers=['authorization']) as cass:
+            if generate:
+                # Emptying file as vcr does not do this by default
+                Path(file_uri).unlink(missing_ok=True)
+            with vcr.use_cassette(file_uri,
+                                  record_mode=record_mode,
+                                  filter_headers=['authorization'],
+                                  decode_compressed_response=True,
+                                  match_on=['method', 'scheme', 'host', 'port', 'path', 'query', 'body']) as cass:
                 if generate is False:
                     cass.allow_playback_repeats = False
                 func(*args, **kwargs)
