@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "integrations-testing-framework"
-version = "0.2.0"
+version = "0.2.1"
 description = ""
 authors = ["y42"]
 
