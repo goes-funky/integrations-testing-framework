@@ -31,7 +31,7 @@ Sets the supplied system args inside the wrapped function's scope.
 Example test:
 ```
 @assert_stdout_matches('./files/output.txt')
-@intercept_requests('./files/requests.txt', generate=False)
+@intercept_requests('./files/requests.yaml', generate=False)
 @with_sys_args(['--config', config_path, '--catalog', catalog_path])
 def test_full_table_sync_spaces_and_teams():
     tap_clickup.main()
@@ -40,7 +40,7 @@ def test_full_table_sync_spaces_and_teams():
 Example test generation:
 ```
 @write_stdout('./files/output.txt')
-@intercept_requests('./files/requests.txt', generate=True)
+@intercept_requests('./files/requests.yaml', generate=True)
 @with_sys_args(['--config', config_path, '--catalog', catalog_path])
 def test_full_table_sync_spaces_and_teams():
     tap_clickup.main()
@@ -53,3 +53,7 @@ def test_full_table_sync_spaces_and_teams():
 - [ ] Add custom request matchers
 - [ ] Add more examples
 - [ ] Add more utils
+
+### Changelog
+- 0.2.0 Replaced Responses with VCR for better compatibility with other libraries that requests and secret masking
+  - Requests are now saved in yaml format
