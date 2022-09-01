@@ -15,7 +15,7 @@ def assert_matching_file_contents(file_1, file_2):
         raise Exception("File is empty.")
 
         
-def select_schema(catalog_path: str, stream_name: str, stream_key: str = 'name', select_by_property = None) -> str:
+def select_schema(catalog_path: str, stream_name: str, stream_key: str = 'name', select_by_property = None, exclude = None) -> str:
     """
     Creates a catalog file with the stream_name selected.
     Example: @with_sys_args(['--config', config_path, '--catalog', utils.select_schema('all-streams.json', 'epics')])
@@ -39,7 +39,14 @@ def select_schema(catalog_path: str, stream_name: str, stream_key: str = 'name',
         for stream in catalog['streams']:
             if stream[stream_key] == stream_name:
                 for property in stream['metadata']:
-                    property['metadata']['selected'] = True
+                    #Exclude some properties in schema metadata
+                    if exclude is not None:
+                        if exclude in property['metadata'] or exclude in property['breadcrumb']:
+                            pass
+                        else:
+                            property['metadata']['selected'] = True
+                    else:
+                        property['metadata']['selected'] = True
 
     #Selected: True added on the metadata of the stream
     else:
