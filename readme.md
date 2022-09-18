@@ -18,20 +18,20 @@ Redirects the content written to the stdout from the wrapped method to the provi
 Sets the supplied system args inside the wrapped function's scope.
 
 ```
-@intercept_requests(file_path, generate=False, ignore_on_match=None, replace_req_headers=['authorization'],
-                    replace_req_params=None, replace_req_data=None, anonymize_resp_data=False,
-                    anonymize_resp_data_skip_keys=None)
+@intercept_requests(file_path, generate=False, ignore_on_match=None, filter_req_headers=['authorization'],
+                    filter_req_params=None, filter_req_data=None, filter_resp_data=False,
+                    filter_resp_data_skip_keys=None)
 ```
 Intercepts HTTP requests made by the wrapped method.
 - **generate:**
   - True: requests made goes to the actual server, requests and their responses are serialized and saved to the provided file.
   - False: requests made are matched and mocked using the content from the provided file.
-- **ignore_on_match:** List of request attributes (e.g. 'query', 'body') to be ignored while matching with the recorded requests.
-- **replace_req_headers:** List of request headers to be replaced with dummy values before saving/matching request to/from the file.
-- **replace_req_params:** List of request query parameters to be replaced with dummy values before saving/matching request to/from the file.
-- **replace_req_data:** List of request post body attributes to be replaced with dummy values before saving/matching request to/from the file.
-- **anonymize_resp_data:** Anonymize response body replacing actual values with dummy values before saving response to the file (for content-type application/json). Decorated method would still receive actual response.
-- **anonymize_resp_data_skip_keys:** List of attributes to be preserved while anonymizing response body.
+- **ignore_on_match:** List of request attributes that should be ignored while matching with recorded requests.
+- **filter_req_headers:** List of request headers that should be replaced with dummy value before saving/matching request to/from the file.
+- **filter_req_params:** List of request query parameters that should be replaced with dummy value before saving/matching request to/from the file.
+- **filter_req_data:** List of request post body attributes that should be replaced with dummy value before saving/matching request to/from the file.
+- **filter_resp_data:** Replace data values in response body with dummy values before saving to the file (for content-type application/json). Decorated method would still receive actual response.
+- **filter_resp_data_skip_keys:** List of keys that should not be altered during response body update.
 
 
 ## Usage
@@ -67,7 +67,7 @@ To handle such cases, you can select attributes of the request that should be ig
 def test_stream_example():
     tap_example.main()
 ```
-> **CAUTION:** Ignoring request attributes might result in multiple matches for a request. In that case next request that has not already been matched would be selected.
+> **Caution:** Ignoring request attributes might result in multiple matches for a request. In that case next request that has not already been matched would be selected.
 
 ### Hide Sensitive Data in Request
 You can opt to replace value of certain parameters in requests query parameters, headers and body with dummy value, before saving requests to the file (generate=True).
@@ -76,36 +76,36 @@ On request mocking (generate=False) provided request parameters would be replace
 # Provide name of parameters through appropriate argument while calling 'intercept_requests' decorator
 
 # For example to replace value of 'client_id' and 'client_secret' query parameters with dummy value
-replace_req_params=['client_id', 'client_secret']
+filter_req_params=['client_id', 'client_secret']
 
 # For example to replace value of 'client_id' and 'authorization' headers with dummy value
-replace_req_headers=['client_id', 'authorization']
+filter_req_headers=['client_id', 'authorization']
 
 # For example to replace value of 'client_id' and 'client_secret' keys in request body with dummy value
-replace_req_data=['client_id', 'client_secret']
+filter_req_data=['client_id', 'client_secret']
 ```
-> **CAUTION:** Replacing a value that is the only distinction between two requests would result in multiple matches for a request at the time of mocking. In that case next request that has not already been matched would be selected.
+> **Caution:** Replacing a value that is the only distinction between two requests would result in multiple matches for a request at the time of mocking. In that case next request that has not already been matched would be selected.
 
 ### Hide Sensitive Data in Response
-You can select to anonymize requests responses before saving them to the file (generate=True). Every value in the response body would be replaced with a dummy value.
+You can select to update requests responses before saving them to the file (generate=True). Every value in the response body would be replaced with a dummy value.
 ```
-# Set 'anonymize_resp_data=True' while calling 'intercept_requests' decorator
+# Set 'filter_resp_data=True' while calling 'intercept_requests' decorator
 ```
-Replacing everything in response body might break tap code while mocking requests from the recorded file (generate=False). For example tap code might expect a valid timestamp, id, report-id etc in response to an API for processing. For such cases, you can provided list of keys that should be preserved during response anonymization.
+Replacing everything in response body might break tap code while mocking requests from the recorded file (generate=False). For example tap code might expect a valid timestamp, id, report-id etc in response to an API for processing. For such cases, you can provided list of keys that should be preserved during response update.
 ```
 # For example to preserve values of 'timestamp', 'id', 'report-id' and 'page-number' keys
-anonymize_resp_data_skip_keys=['timestamp', 'id', 'report-id' 'page-number']
+filter_resp_data_skip_keys=['timestamp', 'id', 'report-id' 'page-number']
 ```
 > **Note:** Decorated method still receives actual response.
 
-> **LIMITATION:** Response anonymization only works for 'content-type: application/json'.
+> **Limitation:** Response update only works for 'content-type: application/json'.
 
 Since decorated method still receives actual response, tap output would still contain sensitive data from response.
-To make tap output anonymized data, we have to write tests in 3 steps instead of 2.
+To hide sensitive content from tap output, we have to write tests in 3 steps instead of 2.
 ```
 # Step 1
 # Run the test making requests to the actual server, record responses to the file.
-@intercept_requests('./requests/example.txt', generate=True, anonymize_resp_data=True)
+@intercept_requests('./requests/example.txt', generate=True, filter_resp_data=True)
 @with_sys_args(['--config', <config_path>, '--catalog', <catalog_path>])
 def test_stream_example():
     tap_example.main()
@@ -131,7 +131,7 @@ def test_stream_example():
 ## TODO
 
 - [ ] Add interface to allow mocking requests programmatically.
-- [ ] Extend response anonymization to more content-types.
+- [ ] Extend response update to more content-types.
 - [ ] Add more utils.
 
 ## Changelog
@@ -140,4 +140,4 @@ def test_stream_example():
 - 0.3.0 Multiple enhancement allowing user to:
   - Ignore parts of a request while matching with recorded requests.
   - Replace sensitive data in requests query parameters, headers and body with dummy data.
-  - Anonymize response body replacing actual data with dummy data (for content-type application/json).
+  - Update response body replacing actual data with dummy data (for content-type application/json).

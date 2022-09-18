@@ -66,16 +66,16 @@ def test_ignore_on_match():
     mocked_request()
 
 
-def test_replace_request_params():
+def test_filter_request_params():
     """
-    Test 'replace_req_params'.
+    Test 'filter_req_params'.
     """
-    @intercept_requests('tests/test_cassette', generate=True, replace_req_params=['param1'])
+    @intercept_requests('tests/test_cassette', generate=True, filter_req_params=['param1'])
     def actual_request():
         requests.get('http://httpbin.org/anything',
                      params={'param1': 'value1'})
 
-    @intercept_requests('tests/test_cassette', generate=False, replace_req_params=['param1'])
+    @intercept_requests('tests/test_cassette', generate=False, filter_req_params=['param1'])
     def mocked_request():
         requests.get('http://httpbin.org/anything',
                      params={'param1': 'value123'})
@@ -84,16 +84,16 @@ def test_replace_request_params():
     mocked_request()
 
 
-def test_replace_request_data():
+def test_filter_request_data():
     """
-    Test 'replace_req_data'.
+    Test 'filter_req_data'.
     """
-    @intercept_requests('tests/test_cassette', generate=True, replace_req_data=['key1'])
+    @intercept_requests('tests/test_cassette', generate=True, filter_req_data=['key1'])
     def actual_request():
         requests.post('http://httpbin.org/anything',
                       json={'key1': 'value1'})
 
-    @intercept_requests('tests/test_cassette', generate=False, replace_req_data=['key1'])
+    @intercept_requests('tests/test_cassette', generate=False, filter_req_data=['key1'])
     def mocked_request():
         requests.post('http://httpbin.org/anything',
                       json={'key1': 'value123'})
@@ -102,11 +102,11 @@ def test_replace_request_data():
     mocked_request()
 
 
-def test_anonymize_response_data():
+def test_filter_response_data():
     """
-    Test 'anonymize_resp_data'.
+    Test 'filter_resp_data'.
     """
-    @intercept_requests('tests/test_cassette', generate=True, anonymize_resp_data=True)
+    @intercept_requests('tests/test_cassette', generate=True, filter_resp_data=True)
     def actual_request():
         requests.post('http://httpbin.org/anything',
                       json={'key1': 'value1'})
@@ -121,14 +121,14 @@ def test_anonymize_response_data():
     mocked_request()
 
 
-def test_anonymize_response_data_skip_keys():
+def test_filter_response_data_skip_keys():
     """
-    Test 'anonymize_resp_data_skip_keys'.
+    Test 'filter_resp_data_skip_keys'.
     """
     @intercept_requests('tests/test_cassette',
                         generate=True,
-                        anonymize_resp_data=True,
-                        anonymize_resp_data_skip_keys=['key1'])
+                        filter_resp_data=True,
+                        filter_resp_data_skip_keys=['key1'])
     def actual_request():
         requests.post('http://httpbin.org/anything',
                       json={'key1': 'value1'})
