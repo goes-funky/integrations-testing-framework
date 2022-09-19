@@ -135,9 +135,11 @@ def test_stream_example():
 - [ ] Add more utils.
 
 ## Changelog
-- 0.2.0 Replaced Responses with VCR for better compatibility with other libraries that requests and secret masking.
-- 0.2.1 Requests are now saved in yaml format.
 - 0.3.0 Multiple enhancement allowing user to:
   - Ignore parts of a request while matching with recorded requests.
   - Replace sensitive data in requests query parameters, headers and body with dummy data.
   - Update response body replacing actual data with dummy data (for content-type application/json).
+- 0.2.1 Requests are now saved in yaml format.
+- - 0.2.0 Replaced Responses with VCR for better compatibility with other libraries that requests and secret masking.
+
+
