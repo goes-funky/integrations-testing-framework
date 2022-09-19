@@ -19,8 +19,8 @@ Sets the supplied system args inside the wrapped function's scope.
 
 ```
 @intercept_requests(file_path, generate=False, ignore_on_match=None, filter_req_headers=['authorization'],
-                    filter_req_params=None, filter_req_data=None, filter_resp_data=False,
-                    filter_resp_data_skip_keys=None)
+                    filter_req_params=None, filter_req_data=None, filter_resp_data=None,
+                    filter_resp_data_except=None)
 ```
 Intercepts HTTP requests made by the wrapped method.
 - **generate:**
@@ -30,8 +30,8 @@ Intercepts HTTP requests made by the wrapped method.
 - **filter_req_headers:** List of request headers that should be replaced with dummy value before saving/matching request to/from the file.
 - **filter_req_params:** List of request query parameters that should be replaced with dummy value before saving/matching request to/from the file.
 - **filter_req_data:** List of request post body attributes that should be replaced with dummy value before saving/matching request to/from the file.
-- **filter_resp_data:** Replace data values in response body with dummy values before saving to the file (for content-type application/json). Decorated method would still receive actual response.
-- **filter_resp_data_skip_keys:** List of keys that should not be altered during response body update.
+- **filter_resp_data:** List of response body keys that should be replaced with dummy values before saving to the file (for content-type application/json). Everything else other than these keys would be preserved. Decorated method would still receive actual response.
+- **filter_resp_data_except:** Everything in response body other than these keys should be replaced with dummy value before saving to the file (for content-type application/json). Decorated method would still receive actual response.
 
 
 ## Usage
@@ -87,15 +87,13 @@ filter_req_data=['client_id', 'client_secret']
 > **Caution:** Replacing a value that is the only distinction between two requests would result in multiple matches for a request at the time of mocking. In that case next request that has not already been matched would be selected.
 
 ### Hide Sensitive Data in Response
-You can select to update requests responses before saving them to the file (generate=True). Every value in the response body would be replaced with a dummy value.
+You can select to update requests responses before saving them to the file (generate=True).
 ```
-# Set 'filter_resp_data=True' while calling 'intercept_requests' decorator
+# Provide list of keys in 'filter_resp_data' argument, that should be replaced with dummy data preserving everything else
+
+# Provide list of keys in 'filter_resp_data_except' argument, that should be preserved replacing everting else with dummy data
 ```
-Replacing everything in response body might break tap code while mocking requests from the recorded file (generate=False). For example tap code might expect a valid timestamp, id, report-id etc in response to an API for processing. For such cases, you can provided list of keys that should be preserved during response update.
-```
-# For example to preserve values of 'timestamp', 'id', 'report-id' and 'page-number' keys
-filter_resp_data_skip_keys=['timestamp', 'id', 'report-id' 'page-number']
-```
+
 > **Note:** Decorated method still receives actual response.
 
 > **Limitation:** Response update only works for 'content-type: application/json'.
@@ -105,7 +103,7 @@ To hide sensitive content from tap output, we have to write tests in 3 steps ins
 ```
 # Step 1
 # Run the test making requests to the actual server, record responses to the file.
-@intercept_requests('./requests/example.txt', generate=True, filter_resp_data=True)
+@intercept_requests('./requests/example.txt', generate=True, filter_resp_data OR filter_resp_data_except)
 @with_sys_args(['--config', <config_path>, '--catalog', <catalog_path>])
 def test_stream_example():
     tap_example.main()
@@ -140,6 +138,6 @@ def test_stream_example():
   - Replace sensitive data in requests query parameters, headers and body with dummy data.
   - Update response body replacing actual data with dummy data (for content-type application/json).
 - 0.2.1 Requests are now saved in yaml format.
-- - 0.2.0 Replaced Responses with VCR for better compatibility with other libraries that requests and secret masking.
+- 0.2.0 Replaced Responses with VCR for better compatibility with other libraries that requests and secret masking.
 
 

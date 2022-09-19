@@ -112,42 +112,41 @@ def test_filter_response_data():
     """
     Test 'filter_resp_data'.
     """
-    @intercept_requests('tests/test_cassette', generate=True, filter_resp_data=True)
+    @intercept_requests('tests/test_cassette', generate=True, filter_resp_data=['key1'])
     def actual_request():
         requests.post('https://httpbin.org/anything',
-                      json={'key1': 'value1'},
+                      json={'key1': 'value1', 'key2': 'value2'},
                       timeout=10)
 
     @intercept_requests('tests/test_cassette', generate=False)
     def mocked_request():
         response = requests.post('https://httpbin.org/anything',
-                                 json={'key1': 'value1'},
+                                 json={'key1': 'value1', 'key2': 'value2'},
                                  timeout=10)
-        assert response.json()['json']['key1'] != 'value1'
+        json_response = response.json()['json']
+        assert json_response['key1'] != 'value1' and json_response['key2'] == 'value2'
 
     actual_request()
     mocked_request()
 
 
-def test_filter_response_data_skip_keys():
+def test_filter_response_data_except():
     """
-    Test 'filter_resp_data_skip_keys'.
+    Test 'filter_resp_data_except'.
     """
-    @intercept_requests('tests/test_cassette',
-                        generate=True,
-                        filter_resp_data=True,
-                        filter_resp_data_skip_keys=['key1'])
+    @intercept_requests('tests/test_cassette1', generate=True, filter_resp_data_except=['key1'])
     def actual_request():
         requests.post('https://httpbin.org/anything',
-                      json={'key1': 'value1'},
+                      json={'key1': 'value1', 'key2': 'value2'},
                       timeout=10)
 
-    @intercept_requests('tests/test_cassette', generate=False)
+    @intercept_requests('tests/test_cassette1', generate=False)
     def mocked_request():
         response = requests.post('https://httpbin.org/anything',
-                                 json={'key1': 'value1'},
+                                 json={'key1': 'value1', 'key2': 'value2'},
                                  timeout=10)
-        assert response.json()['json']['key1'] == 'value1'
+        json_response = response.json()['json']
+        assert json_response['key1'] == 'value1' and json_response['key2'] != 'value2'
 
     actual_request()
     mocked_request()

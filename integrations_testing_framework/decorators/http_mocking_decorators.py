@@ -15,8 +15,8 @@ _PRESERVE_CHARS = set(r'!@#$%^&*_-+=()[]{}\/<>,.?')
 
 
 def intercept_requests(file_uri: str, generate=False, ignore_on_match=None, filter_req_headers=['authorization'],
-                       filter_req_params=None, filter_req_data=None, filter_resp_data=False,
-                       filter_resp_data_skip_keys=None):
+                       filter_req_params=None, filter_req_data=None, filter_resp_data=None,
+                       filter_resp_data_except=None):
     """
     A decorator that will intercept HTTP calls and depending on the supplied configuration will either save the call
     data to a file or will mock the request with data from the given file.
@@ -49,22 +49,32 @@ def intercept_requests(file_uri: str, generate=False, ignore_on_match=None, filt
             filter_req_data=['access_token']
         Note: Only works for POST method.
               Might not work well for content-types other than JSON.
-    :param bool filter_resp_data: Replace data values in response body with dummy values before saving to the file.
+    :param list filter_resp_data: List of response body keys that should be replaced with dummy values
+    before saving to the file. Everything else other than these keys would be preserved.
+        Example:
+            Replace 'email' and 'cell_number' with dummy values
+            filter_resp_data=['email', 'cell_number']
         Note: Only works for content-type JSON at the moment.
               Decorated method would still receive actual response.
-    :param list filter_resp_data_skip_keys: List of keys that should not be altered during response body update.
+    :param list filter_resp_data_except: Everything in response body other than these keys should be replaced with dummy
+    value before saving to the file.
         Example:
-            Don't replace value of 'id' and 'sync_timestamp' fields in response body
-            filter_resp_data_skip_keys=['id', 'sync_timestamp']
+            Replace everything in response body with dummy values other than 'id' and 'sync_timestamp' keys
+            filter_resp_data_except=['id', 'sync_timestamp']
+        Note: Only works for content-type JSON at the moment.
+              Decorated method would still receive actual response.
     """
+    if filter_resp_data and filter_resp_data_except:
+        raise ValueError('One of (filter_resp_data, filter_resp_data_except) can be used at a time')
     record_mode = 'all' if generate else 'none'
     match_on = _MATCH_ON - set(ignore_on_match) if ignore_on_match else _MATCH_ON
     match_on = list(match_on)
     filter_req_data = _to_list_of_tuple(filter_req_data or [])
     filter_req_params = _to_list_of_tuple(filter_req_params or [])
     filter_req_headers = _to_list_of_tuple(filter_req_headers or [])
-    configs = {'filter_data_skip_keys': filter_resp_data_skip_keys}
-    before_record_response = partial(_before_record_response, **configs) if filter_resp_data and generate else None
+    configs = {'data_update_keys': filter_resp_data, 'data_skip_keys': filter_resp_data_except}
+    update_resp_data = filter_resp_data or filter_resp_data_except
+    before_record_response = partial(_before_record_response, **configs) if update_resp_data and generate else None
 
     def decorator(func):
         @wraps(func)
@@ -107,7 +117,9 @@ def _before_record_response(response, **kwargs):
         return response
     update_function = supported_content_types[content_type]
     try:
-        updated_body = update_function(body, skip_keys=kwargs.get('filter_data_skip_keys'))
+        updated_body = update_function(body,
+                                       update_keys=kwargs.get('data_update_keys'),
+                                       skip_keys=kwargs.get('data_skip_keys'))
     except ValueError as err:
         raise ValueError('Failed to update response body') from err
     response['body']['string'] = updated_body
@@ -131,16 +143,20 @@ def _get_content_type(response):
     return content_type.lower().strip()
 
 
-def _filter_json(data, skip_keys=None):
+def _filter_json(data, update_keys=None, skip_keys=None):
     """
-    Replace values in JSON with dummy data.
+    Update values in JSON with dummy data.
     :param string data: JSON data.
-    :param list skip_keys: Keys to be preserved.
+    :param list update_keys: Keys that should be updated, rest would be not be altered.
+    :param list skip_keys: Keys that should not be altered, rest would be updated.
     :return: Updated JSON.
     :type: string
     :raises ValueError: for invalid JSON.
     """
+    update_keys = set(update_keys) if update_keys else {}
     skip_keys = set(skip_keys) if skip_keys else {}
+    if update_keys and skip_keys:
+        raise ValueError('Only one of (update_keys, skip_keys) can be used at a time')
 
     def update_data(_data):
         # Simple types
@@ -159,7 +175,14 @@ def _filter_json(data, skip_keys=None):
         if isinstance(_data, list):
             return [update_data(item) for item in _data]
         if isinstance(_data, dict):
-            return {key: value if key in skip_keys else update_data(value) for key, value in _data.items()}
+            if skip_keys:
+                return {key: update_data(value) if isinstance(value, dict) or key not in skip_keys else value
+                        for key, value in _data.items()}
+            if update_keys:
+                return {key: update_data(value) if isinstance(value, dict) or key in update_keys else value
+                        for key, value in _data.items()}
+            # Update everything
+            return {key: update_data(value) for key, value in _data.items()}
     json_data = json.loads(data)
     return json.dumps(update_data(json_data), indent=4)
 
