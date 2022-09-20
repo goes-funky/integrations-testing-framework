@@ -1,4 +1,3 @@
-import urllib.request
 
 from vcr.errors import CannotOverwriteExistingCassetteException
 
@@ -9,17 +8,16 @@ import requests
 
 @intercept_requests('tests/cassette', generate=False)
 def test_request():
-    response = urllib.request.urlopen('https://www.iana.org/domains/reserved').read()
-    assert 'domains' in response.decode('utf8')
+    response = requests.get('https://www.iana.org/domains/reserved', timeout=10)
+    assert 'domains' in response.text
 
 
 def test_auth_removal():
     @intercept_requests('tests/cassette2', generate=True)
     def test_auth_request():
-        request = urllib.request.Request('https://www.iana.org/domains/reserved', method='GET')
-        request.add_header("Authorization", "Bearer " + 'some Test token');
-        response = urllib.request.urlopen(request).read()
-        assert 'domains' in response.decode('utf8')
+        response = requests.get('https://www.iana.org/domains/reserved', timeout=10,
+                                headers={'Authorization': "Bearer " + 'some Test token'})
+        assert 'domains' in response.text
     test_auth_request()
     with open('tests/cassette2', 'r') as cassette2:
         text = cassette2.read()
@@ -29,8 +27,8 @@ def test_auth_removal():
 def test_too_few_requests():
     @intercept_requests('tests/cassette3', generate=False)
     def test_request_cassette_with_two_requests():
-        response = urllib.request.urlopen('https://www.iana.org/domains/reserved').read()
-        assert 'domains' in response.decode('utf8')
+        response = requests.get('https://www.iana.org/domains/reserved', timeout=10)
+        assert 'domains' in response.text
 
     with pytest.raises(AssertionError) as err:
         test_request_cassette_with_two_requests()
@@ -40,9 +38,9 @@ def test_too_few_requests():
 def test_too_many_requests():
     @intercept_requests('tests/cassette3', generate=False)
     def test_three_request_for_cassette_with_two_requests():
-        urllib.request.urlopen('https://www.iana.org/domains/reserved').read()
-        urllib.request.urlopen('https://www.iana.org/domains/reserved').read()
-        urllib.request.urlopen('https://www.iana.org/domains/reserved').read()
+        requests.get('https://www.iana.org/domains/reserved', timeout=10).text
+        requests.get('https://www.iana.org/domains/reserved', timeout=10).text
+        requests.get('https://www.iana.org/domains/reserved', timeout=10).text
 
     with pytest.raises(CannotOverwriteExistingCassetteException):
         test_three_request_for_cassette_with_two_requests()
