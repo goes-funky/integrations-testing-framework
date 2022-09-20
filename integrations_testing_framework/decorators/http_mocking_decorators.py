@@ -165,9 +165,9 @@ def _filter_json(data, update_keys=None, skip_keys=None):
         # Invert bool value
         if isinstance(_data, bool):
             return not _data
-        # Add 1 to numbers
+        # Replace number with 0
         if isinstance(_data, (int, float)):
-            return _data + 1
+            return _data * 0
         # Replace characters in string with 'X'
         if isinstance(_data, str):
             return ''.join([x if x in _PRESERVE_CHARS else 'X' for x in _data])
