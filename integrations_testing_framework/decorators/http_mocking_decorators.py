@@ -122,6 +122,8 @@ def _before_record_request(request, **kwargs):
         return request
     # Replace content in request body, currently works only for JSON
     body = request.body
+    if not body:
+        return request
     update_function = supported_content_types[content_type]
     try:
         updated_body = update_function(body, update_keys=kwargs.get('data_update_keys'))
