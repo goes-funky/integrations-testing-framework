@@ -29,7 +29,7 @@ Intercepts HTTP requests made by the wrapped method.
 - **ignore_on_match:** List of request attributes that should be ignored while matching with recorded requests.
 - **filter_req_headers:** List of request headers that should be replaced with dummy value before saving/matching request to/from the file.
 - **filter_req_params:** List of request query parameters that should be replaced with dummy value before saving/matching request to/from the file.
-- **filter_req_data:** List of request post body attributes that should be replaced with dummy value before saving/matching request to/from the file.
+- **filter_req_data:** List of request body keys that should be replaced with dummy value before saving/matching request to/from the file (for content-type application/json).
 - **filter_resp_data:** List of response body keys that should be replaced with dummy values before saving to the file (for content-type application/json). Everything else other than these keys would be preserved. Decorated method would still receive actual response.
 - **filter_resp_data_except:** Everything in response body other than these keys should be replaced with dummy value before saving to the file (for content-type application/json). Decorated method would still receive actual response.
 

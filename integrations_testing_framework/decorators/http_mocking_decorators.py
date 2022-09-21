@@ -42,13 +42,12 @@ def intercept_requests(file_uri: str, generate=False, ignore_on_match=None, filt
         Example:
             Replace 'client-id' and 'client-secret' values in query parameters
             filter_req_params=['client-id', 'client-secret']
-    :param list filter_req_data: List of request post body attributes that should be replaced with dummy value before
+    :param list filter_req_data: List of request body keys that should be replaced with dummy value before
     saving/matching request to/from the file.
         Example:
             Replace 'access_token' value in request body
             filter_req_data=['access_token']
-        Note: Only works for POST method.
-              Might not work well for content-types other than JSON.
+        Note: Only works for content-type JSON at the moment.
     :param list filter_resp_data: List of response body keys that should be replaced with dummy values
     before saving to the file. Everything else other than these keys would be preserved.
         Example:
@@ -69,12 +68,15 @@ def intercept_requests(file_uri: str, generate=False, ignore_on_match=None, filt
     record_mode = 'all' if generate else 'none'
     match_on = _MATCH_ON - set(ignore_on_match) if ignore_on_match else _MATCH_ON
     match_on = list(match_on)
-    filter_req_data = _to_list_of_tuple(filter_req_data or [])
     filter_req_params = _to_list_of_tuple(filter_req_params or [])
     filter_req_headers = _to_list_of_tuple(filter_req_headers or [])
-    configs = {'data_update_keys': filter_resp_data, 'data_skip_keys': filter_resp_data_except}
+    # Request processing hook
+    req_configs = {'data_update_keys': filter_req_data}
+    before_record_request = partial(_before_record_request, **req_configs) if filter_req_data else None
+    # Response processing hook
+    resp_configs = {'data_update_keys': filter_resp_data, 'data_skip_keys': filter_resp_data_except}
     update_resp_data = filter_resp_data or filter_resp_data_except
-    before_record_response = partial(_before_record_response, **configs) if update_resp_data and generate else None
+    before_record_response = partial(_before_record_response, **resp_configs) if update_resp_data and generate else None
 
     def decorator(func):
         @wraps(func)
@@ -86,7 +88,7 @@ def intercept_requests(file_uri: str, generate=False, ignore_on_match=None, filt
                                   record_mode=record_mode,
                                   filter_headers=filter_req_headers,
                                   filter_query_parameters=filter_req_params,
-                                  filter_post_data_parameters=filter_req_data,
+                                  before_record_request=before_record_request,
                                   before_record_response=before_record_response,
                                   decode_compressed_response=True,
                                   match_on=match_on) as cass:
@@ -100,6 +102,35 @@ def intercept_requests(file_uri: str, generate=False, ignore_on_match=None, filt
     return decorator
 
 
+def _before_record_request(request, **kwargs):
+    """
+    Callback for processing request before recording to the file.
+    """
+    # Supported content-types
+    supported_content_types = {
+        'application/json': _filter_json
+    }
+    # Read content-type
+    headers = request.headers
+    content_type = headers.get('Content-Type') or headers.get('content-type')
+    if not content_type or not isinstance(content_type, str):
+        LOGGER.warning('Could not get content-type from request headers')
+        return request
+    content_type = content_type.lower().strip()
+    if content_type not in supported_content_types:
+        LOGGER.warning('Unsupported content-type "%s" for request update', content_type)
+        return request
+    # Replace content in request body, currently works only for JSON
+    body = request.body
+    update_function = supported_content_types[content_type]
+    try:
+        updated_body = update_function(body, update_keys=kwargs.get('data_update_keys'))
+    except ValueError as err:
+        raise ValueError('Failed to update request body') from err
+    request.body = updated_body
+    return request
+
+
 def _before_record_response(response, **kwargs):
     """
     Callback for processing response before recording to the file.
@@ -108,13 +139,18 @@ def _before_record_response(response, **kwargs):
     supported_content_types = {
         'application/json': _filter_json
     }
-    # Replace content in response body, currently works only for JSON
-    body = response['body']['string']
     # Read content-type
-    content_type = _get_content_type(response)
+    headers = response.get('headers', {})
+    content_type = headers.get('Content-Type') or headers.get('content-type')
+    if not content_type or not isinstance(content_type, list):
+        LOGGER.warning('Could not get content-type from response headers')
+        return response
+    content_type = content_type[0].split(';')[0].lower().strip()
     if content_type not in supported_content_types:
         LOGGER.warning('Unsupported content-type "%s" for response update', content_type)
         return response
+    # Replace content in response body, currently works only for JSON
+    body = response['body']['string']
     update_function = supported_content_types[content_type]
     try:
         updated_body = update_function(body,
@@ -124,23 +160,6 @@ def _before_record_response(response, **kwargs):
         raise ValueError('Failed to update response body') from err
     response['body']['string'] = updated_body
     return response
-
-
-def _get_content_type(response):
-    """
-    Get content type from response header.
-    :param dict response: Response object.
-    :return: Content type.
-    :type: string
-    """
-    if 'headers' not in response:
-        return None
-    content_type = response['headers'].get('Content-Type') or response['headers'].get('content-type')
-    if not content_type or not isinstance(content_type, list):
-        return None
-    content_type = content_type[0]
-    content_type = content_type.split(';')[0]
-    return content_type.lower().strip()
 
 
 def _filter_json(data, update_keys=None, skip_keys=None):
@@ -184,7 +203,7 @@ def _filter_json(data, update_keys=None, skip_keys=None):
             # Update everything
             return {key: update_data(value) for key, value in _data.items()}
     json_data = json.loads(data)
-    return json.dumps(update_data(json_data), indent=4)
+    return json.dumps(update_data(json_data))
 
 
 def _to_list_of_tuple(list_of_strings):

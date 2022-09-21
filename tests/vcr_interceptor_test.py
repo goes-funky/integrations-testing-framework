@@ -99,7 +99,7 @@ def test_filter_request_data():
     @intercept_requests('tests/test_cassette', generate=False, filter_req_data=['key1'])
     def mocked_request():
         requests.post('https://httpbin.org/anything',
-                      json={'key1': 'value123'},
+                      json={'key1': 'value1'},
                       timeout=10)
 
     actual_request()
