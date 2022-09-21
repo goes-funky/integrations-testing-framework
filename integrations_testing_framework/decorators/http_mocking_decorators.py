@@ -42,12 +42,14 @@ def intercept_requests(file_uri: str, generate=False, ignore_on_match=None, filt
         Example:
             Replace 'client-id' and 'client-secret' values in query parameters
             filter_req_params=['client-id', 'client-secret']
-    :param list filter_req_data: List of request body keys that should be replaced with dummy value before
+    :param list filter_req_data: List of request POST body keys that should be replaced with dummy value before
     saving/matching request to/from the file.
         Example:
             Replace 'access_token' value in request body
             filter_req_data=['access_token']
-        Note: Only works for content-type JSON at the moment.
+        Note: Only works for POST method.
+              Might not work well for content-types other than JSON.
+              Cannot replace nested keys.
     :param list filter_resp_data: List of response body keys that should be replaced with dummy values
     before saving to the file. Everything else other than these keys would be preserved.
         Example:
@@ -68,11 +70,9 @@ def intercept_requests(file_uri: str, generate=False, ignore_on_match=None, filt
     record_mode = 'all' if generate else 'none'
     match_on = _MATCH_ON - set(ignore_on_match) if ignore_on_match else _MATCH_ON
     match_on = list(match_on)
+    filter_req_data = _to_list_of_tuple(filter_req_data or [])
     filter_req_params = _to_list_of_tuple(filter_req_params or [])
     filter_req_headers = _to_list_of_tuple(filter_req_headers or [])
-    # Request processing hook
-    req_configs = {'data_update_keys': filter_req_data}
-    before_record_request = partial(_before_record_request, **req_configs) if filter_req_data else None
     # Response processing hook
     resp_configs = {'data_update_keys': filter_resp_data, 'data_skip_keys': filter_resp_data_except}
     update_resp_data = filter_resp_data or filter_resp_data_except
@@ -88,7 +88,7 @@ def intercept_requests(file_uri: str, generate=False, ignore_on_match=None, filt
                                   record_mode=record_mode,
                                   filter_headers=filter_req_headers,
                                   filter_query_parameters=filter_req_params,
-                                  before_record_request=before_record_request,
+                                  filter_post_data_parameters=filter_req_data,
                                   before_record_response=before_record_response,
                                   decode_compressed_response=True,
                                   match_on=match_on) as cass:
@@ -100,35 +100,6 @@ def intercept_requests(file_uri: str, generate=False, ignore_on_match=None, filt
         return interceptor
 
     return decorator
-
-
-def _before_record_request(request, **kwargs):
-    """
-    Callback for processing request before recording to the file.
-    """
-    # Supported content-types
-    supported_content_types = {
-        'application/json': _filter_json
-    }
-    # Read content-type
-    headers = request.headers
-    content_type = headers.get('Content-Type') or headers.get('content-type')
-    if not content_type or not isinstance(content_type, str):
-        LOGGER.warning('Could not get content-type from request headers')
-        return request
-    content_type = content_type.lower().strip()
-    if content_type not in supported_content_types:
-        LOGGER.warning('Unsupported content-type "%s" for request update', content_type)
-        return request
-    # Replace content in request body, currently works only for JSON
-    body = request.body
-    update_function = supported_content_types[content_type]
-    try:
-        updated_body = update_function(body, update_keys=kwargs.get('data_update_keys'))
-    except ValueError as err:
-        raise ValueError('Failed to update request body') from err
-    request.body = updated_body
-    return request
 
 
 def _before_record_response(response, **kwargs):
