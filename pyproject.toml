@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "integrations-testing-framework"
-version = "0.2.1"
+version = "0.3.0"
 description = ""
 authors = ["y42"]
 
@@ -10,6 +10,9 @@ vcrpy = "^4.2.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.1.2"
+requests = "^2.28.1"
+bandit = "^1.7.4"
+coverage = "^6.4.4"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

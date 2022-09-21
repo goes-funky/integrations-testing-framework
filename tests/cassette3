@@ -9,7 +9,7 @@ interactions:
       User-Agent:
       - Python-urllib/3.9
     method: GET
-    uri: http://www.iana.org/domains/reserved
+    uri: https://www.iana.org/domains/reserved
   response:
     body:
       string: "<!doctype html>\n<html>\n<head>\n\t<title>IANA-managed Reserved Domains</title>\n\n\t<meta
@@ -181,7 +181,7 @@ interactions:
       User-Agent:
       - Python-urllib/3.9
     method: GET
-    uri: http://www.iana.org/domains/reserved
+    uri: https://www.iana.org/domains/reserved
   response:
     body:
       string: "<!doctype html>\n<html>\n<head>\n\t<title>IANA-managed Reserved Domains</title>\n\n\t<meta
