@@ -295,8 +295,8 @@ multidict = ">=4.0"
 
 [metadata]
 lock-version = "1.1"
-python-versions = "^3.9"
-content-hash = "f567408b9ebb78067043e21c591614c9fbc2c318345ad965115c97acefabed6f"
+python-versions = ">=3.8,<4.0"
+content-hash = "8ab0012fd7918024cf92758727b1dc6f9966ea45cec44c40abe25251f7d29171"
 
 [metadata.files]
 attrs = [
